@@ -41,7 +41,16 @@
       <h2>2. Paste Text</h2>
       <span class="badge" id="pasteCharCount">0 chars</span>
     </div>
-    <textarea id="pasteArea" placeholder="Paste any text here — emails, notes, blog posts, commit messages, code snippets...&#10;&#10;This will be included in the analysis along with uploaded files."></textarea>
+    <div class="paste-entries" id="pasteEntries">
+      <div class="paste-entry" data-idx="0">
+        <input type="text" class="paste-title" placeholder="Title (e.g. email, blog post, notes)" value="">
+        <textarea class="paste-area" placeholder="Paste any text here — emails, notes, blog posts, commit messages, code snippets..."></textarea>
+        <button type="button" class="paste-remove-btn hidden" title="Remove">&times;</button>
+      </div>
+    </div>
+    <div class="paste-footer">
+      <button type="button" class="btn btn-secondary" id="addPasteBtn">+ Add Text</button>
+    </div>
   </div>
 
   <div class="action-bar">

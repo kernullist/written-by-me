@@ -8,7 +8,8 @@
     const fileList = document.getElementById("fileList");
     const fileCount = document.getElementById("fileCount");
     const uploadStatus = document.getElementById("uploadStatus");
-    const pasteArea = document.getElementById("pasteArea");
+    const pasteEntries = document.getElementById("pasteEntries");
+    const addPasteBtn = document.getElementById("addPasteBtn");
     const pasteCharCount = document.getElementById("pasteCharCount");
     const analyzeBtn = document.getElementById("analyzeBtn");
     const btnSpinner = document.getElementById("btnSpinner");
@@ -241,18 +242,92 @@
     }
 
     /* ===== Paste Area ===== */
-    pasteArea.addEventListener("input", () =>
+
+    let pasteEntryCounter = 1;
+
+    addPasteBtn.addEventListener("click", () =>
     {
-        const len = pasteArea.value.length;
-        pasteCharCount.textContent = len + " char" + (len !== 1 ? "s" : "");
-        updateAnalyzeButton();
+        const entry = document.createElement("div");
+        entry.className = "paste-entry";
+        entry.dataset.idx = pasteEntryCounter;
+
+        const title = document.createElement("input");
+        title.type = "text";
+        title.className = "paste-title";
+        title.placeholder = "Title (e.g. email, blog post, notes)";
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "paste-area";
+        textarea.placeholder = "Paste any text here...";
+        textarea.addEventListener("input", updatePasteStats);
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "paste-remove-btn";
+        removeBtn.textContent = "\u00d7";
+        removeBtn.title = "Remove";
+        removeBtn.addEventListener("click", () =>
+        {
+            entry.remove();
+            updatePasteStats();
+            updateRemoveButtons();
+        });
+
+        entry.appendChild(title);
+        entry.appendChild(textarea);
+        entry.appendChild(removeBtn);
+        pasteEntries.appendChild(entry);
+
+        pasteEntryCounter++;
+        updateRemoveButtons();
     });
+
+    function updateRemoveButtons()
+    {
+        const entries = pasteEntries.querySelectorAll(".paste-entry");
+        for (const entry of entries)
+        {
+            const btn = entry.querySelector(".paste-remove-btn");
+            if (entries.length > 1)
+            {
+                btn.classList.remove("hidden");
+            }
+            else
+            {
+                btn.classList.add("hidden");
+            }
+        }
+    }
+
+    function updatePasteStats()
+    {
+        let total = 0;
+        const areas = pasteEntries.querySelectorAll(".paste-area");
+        for (const area of areas)
+        {
+            total += area.value.length;
+        }
+        pasteCharCount.textContent = total + " char" + (total !== 1 ? "s" : "");
+        updateAnalyzeButton();
+    }
+
+    pasteEntries.querySelector(".paste-area").addEventListener("input", updatePasteStats);
+    updateRemoveButtons();
 
     /* ===== Analyze Button ===== */
     function updateAnalyzeButton()
     {
         const hasFiles = uploadedFiles.length > 0;
-        const hasPaste = pasteArea.value.trim().length > 0;
+        let hasPaste = false;
+        const areas = pasteEntries.querySelectorAll(".paste-area");
+        for (const area of areas)
+        {
+            if (area.value.trim().length > 0)
+            {
+                hasPaste = true;
+                break;
+            }
+        }
 
         analyzeBtn.disabled = !(hasFiles || hasPaste);
     }
@@ -261,10 +336,19 @@
 
     async function runAnalysis()
     {
+        let hasPaste = false;
+        const areas = pasteEntries.querySelectorAll(".paste-area");
+        for (const area of areas)
+        {
+            if (area.value.trim().length > 0)
+            {
+                hasPaste = true;
+                break;
+            }
+        }
         const hasFiles = uploadedFiles.length > 0;
-        const pastedText = pasteArea.value.trim();
 
-        if (!hasFiles && !pastedText)
+        if (!hasFiles && !hasPaste)
         {
             return;
         }
@@ -276,9 +360,25 @@
         uploadStatus.textContent = "";
         uploadStatus.className = "upload-status";
 
+        const pasteTexts = [];
+        const entries = pasteEntries.querySelectorAll(".paste-entry");
+        for (const entry of entries)
+        {
+            const title = entry.querySelector(".paste-title");
+            const textarea = entry.querySelector(".paste-area");
+            const text = textarea.value.trim();
+            if (text.length > 0)
+            {
+                pasteTexts.push({
+                    source: title.value.trim() || "pasted-text-" + pasteTexts.length,
+                    content: text
+                });
+            }
+        }
+
         const body = {
             fileIds: uploadedFiles.map((f) => f.id),
-            pastedText: pastedText,
+            pasteTexts: pasteTexts,
             model: selectedModel
         };
 
@@ -396,10 +496,40 @@
         uploadedFiles = [];
         analysisResult = null;
         analysisId = null;
-        pasteArea.value = "";
+
+        pasteEntries.innerHTML = "";
+        const entry = document.createElement("div");
+        entry.className = "paste-entry";
+        entry.dataset.idx = "0";
+        const title = document.createElement("input");
+        title.type = "text";
+        title.className = "paste-title";
+        title.placeholder = "Title (e.g. email, blog post, notes)";
+        const textarea = document.createElement("textarea");
+        textarea.className = "paste-area";
+        textarea.placeholder = "Paste any text here...";
+        textarea.addEventListener("input", updatePasteStats);
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "paste-remove-btn hidden";
+        removeBtn.textContent = "\u00d7";
+        removeBtn.title = "Remove";
+        removeBtn.addEventListener("click", () =>
+        {
+            entry.remove();
+            updatePasteStats();
+            updateRemoveButtons();
+        });
+        entry.appendChild(title);
+        entry.appendChild(textarea);
+        entry.appendChild(removeBtn);
+        pasteEntries.appendChild(entry);
+
+        pasteEntryCounter = 1;
         pasteCharCount.textContent = "0 chars";
         renderFileList();
         updateAnalyzeButton();
+        updateRemoveButtons();
         resultZone.classList.add("hidden");
         uploadStatus.textContent = "";
         uploadStatus.className = "upload-status";

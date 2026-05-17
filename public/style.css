@@ -220,22 +220,90 @@ body {
 
 /* Paste Area */
 
-.paste-panel textarea {
+.paste-entries {
+    padding: 8px 20px;
+}
+
+.paste-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.paste-title {
     width: 100%;
-    min-height: 160px;
-    padding: 16px 20px;
+    padding: 6px 12px;
     background: var(--bg-primary);
-    border: none;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.paste-title:focus {
+    border-color: var(--accent);
+}
+
+.paste-title::placeholder {
+    color: var(--text-muted);
+}
+
+.paste-area {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 0.85rem;
     line-height: 1.6;
     resize: vertical;
     outline: none;
+    transition: border-color 0.15s;
 }
 
-.paste-panel textarea::placeholder {
+.paste-area:focus {
+    border-color: var(--accent);
+}
+
+.paste-area::placeholder {
     color: var(--text-muted);
+}
+
+.paste-remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+}
+
+.paste-remove-btn:hover {
+    color: var(--danger);
+    background: rgba(248, 81, 73, 0.1);
+}
+
+.paste-remove-btn.hidden {
+    display: none;
+}
+
+.paste-footer {
+    padding: 8px 20px 14px;
+    border-top: 1px solid var(--border);
 }
 
 /* Buttons */

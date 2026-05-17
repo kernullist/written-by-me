@@ -127,11 +127,22 @@ router.post("/upload", async (req, res) =>
 
 router.post("/analyze-with-paste", async (req, res) =>
 {
-    const { fileIds, pastedText, model, preferredLanguage } = req.body;
+    const { fileIds, pasteTexts, pastedText, model, preferredLanguage } = req.body;
     const texts = [];
     const missingFileIds = [];
 
-    if (pastedText && pastedText.trim().length > 0)
+    if (pasteTexts && Array.isArray(pasteTexts))
+    {
+        for (const pt of pasteTexts)
+        {
+            if (pt.content && pt.content.trim().length > 0)
+            {
+                const source = pt.source || "pasted-text";
+                texts.push({ source, content: pt.content.trim() });
+            }
+        }
+    }
+    else if (pastedText && pastedText.trim().length > 0)
     {
         texts.push({ source: "pasted-text", content: pastedText.trim() });
     }
