@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
+const { EventEmitter } = require("events");
 const express = require("express");
 const cors = require("cors");
 const { listModels } = require("./services/ai");
@@ -20,6 +21,32 @@ fs.mkdirSync(path.join(__dirname, "output"), { recursive: true });
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+const logEmitter = new EventEmitter();
+const MAX_LOG_ENTRIES = 200;
+const logBuffer = [];
+
+function logEvent(type, message)
+{
+    const entry = {
+        ts: Date.now(),
+        type,
+        message
+    };
+
+    logBuffer.push(entry);
+    if (logBuffer.length > MAX_LOG_ENTRIES)
+    {
+        logBuffer.shift();
+    }
+
+    logEmitter.emit("entry", entry);
+
+    const prefix = type === "error" ? "[ERROR]" : type === "warn" ? "[WARN]" : "[+]";
+    console.log(`${prefix} ${message}`);
+}
+
+global.__wbmLogEvent = logEvent;
 
 let cachedModels = null;
 let cachedModelsAt = 0;
@@ -45,7 +72,7 @@ app.get("/api/config", async (_req, res) =>
         }
         catch (err)
         {
-            console.warn("[WrittenByMe] Could not fetch model list:", err.message);
+            logEvent("warn", "Could not fetch model list: " + err.message);
         }
     }
 
@@ -53,6 +80,41 @@ app.get("/api/config", async (_req, res) =>
         model: defaultModel,
         models,
         maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB) || 10
+    });
+});
+
+app.get("/api/logs/stream", (req, res) =>
+{
+    res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no"
+    });
+
+    res.write("retry: 1000\n\n");
+
+    for (const entry of logBuffer)
+    {
+        res.write(`data: ${JSON.stringify(entry)}\n\n`);
+    }
+
+    const handler = (entry) =>
+    {
+        res.write(`data: ${JSON.stringify(entry)}\n\n`);
+    };
+
+    logEmitter.on("entry", handler);
+
+    const keepAlive = setInterval(() =>
+    {
+        res.write(": keepalive\n\n");
+    }, 15000);
+
+    req.on("close", () =>
+    {
+        logEmitter.off("entry", handler);
+        clearInterval(keepAlive);
     });
 });
 

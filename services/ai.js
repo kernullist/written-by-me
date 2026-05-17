@@ -1,5 +1,13 @@
 const { buildPrompt, estimateTokens, buildMergePrompt } = require("./skillGenerator");
 
+function log(type, message)
+{
+    if (global.__wbmLogEvent)
+    {
+        global.__wbmLogEvent(type, message);
+    }
+}
+
 function getBaseUrl()
 {
     let url = process.env.OPENAI_BASE_URL || "https://api.deepseek.com/v1";
@@ -63,6 +71,7 @@ async function analyzeStyle(prompt, modelOverride)
     const maxTokens = parseInt(process.env.AI_MAX_TOKENS) || 8192;
 
     console.log(`[ai] Sending prompt (${prompt.length} chars) to model: ${model}`);
+    log("info", `Sending ${prompt.length} chars to ${model}`);
 
     const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
         method: "POST",
@@ -118,6 +127,7 @@ async function analyzeStyle(prompt, modelOverride)
         {
             errText = "(could not read error body)";
         }
+        log("error", `API error ${response.status}: ${errText}`);
         throw new Error(`AI API error ${response.status}: ${errText}`);
     }
 
@@ -127,13 +137,17 @@ async function analyzeStyle(prompt, modelOverride)
         throw new Error("Unexpected AI API response structure.");
     }
 
+    const content = data.choices[0].message.content;
     const finishReason = data.choices[0].finish_reason;
+    log("info", `Response received: ${content.length} chars, finish_reason=${finishReason || "stop"}`);
+
     if (finishReason === "length")
     {
+        log("warn", "Output was truncated (finish_reason=length). Consider increasing AI_MAX_TOKENS.");
         console.warn("[ai] Output was truncated (finish_reason=length). Consider increasing AI_MAX_TOKENS.");
     }
 
-    return data.choices[0].message.content;
+    return content;
 }
 
 async function listModels()
@@ -221,11 +235,13 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
     if (totalTokens <= availableForInput)
     {
         console.log("[ai] Strategy: single_pass");
+        log("info", `Strategy: single_pass (${totalCount} sources, ~${totalTokens} tokens fit in ${availableForInput})`);
         const result = await analyzeStyle(fullPrompt, model);
         return { skillMd: result, strategy: "single_pass", batches: 1 };
     }
 
     console.log("[ai] Strategy: batched");
+    log("info", `Strategy: batched — ${totalTokens} tokens exceeds ${availableForInput} limit, splitting sources`);
 
     const batches = [];
     let currentBatch = [];
@@ -268,17 +284,20 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
     }
 
     console.log(`[ai] Split into ${batches.length} batches`);
+    log("info", `Split into ${batches.length} batches`);
 
     const analyses = [];
     for (let i = 0; i < batches.length; i++)
     {
         console.log(`[ai] Processing batch ${i + 1}/${batches.length} (${batches[i].length} sources)`);
+        log("info", `Batch ${i + 1}/${batches.length}: analyzing ${batches[i].length} sources (${batches[i].reduce((s, t) => s + t.content.length, 0)} chars)`);
         const batchPrompt = buildPrompt(batches[i], preferredLanguage);
         const analysis = await analyzeStyle(batchPrompt, model);
         analyses.push(analysis);
     }
 
     console.log("[ai] Merging batch results...");
+    log("info", `Merging ${analyses.length} batch analyses into one Skill.md`);
     const mergePrompt = buildMergePrompt(analyses, totalCount, preferredLanguage);
     const merged = await analyzeStyle(mergePrompt, model);
 

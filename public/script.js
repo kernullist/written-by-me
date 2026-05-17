@@ -562,6 +562,85 @@
         }, 3500);
     }
 
+    /* ===== Activity Log (SSE) ===== */
+    const logEntries = document.getElementById("logEntries");
+    const logClearBtn = document.getElementById("logClearBtn");
+
+    logClearBtn.addEventListener("click", () =>
+    {
+        logEntries.innerHTML = '<div class="log-entry log-placeholder">Cleared.</div>';
+        setTimeout(() =>
+        {
+            const placeholder = logEntries.querySelector(".log-placeholder");
+            if (placeholder)
+            {
+                placeholder.textContent = "Waiting for activity...";
+            }
+        }, 2000);
+    });
+
+    function formatLogTime(ts)
+    {
+        const d = new Date(ts);
+        const h = String(d.getHours()).padStart(2, "0");
+        const m = String(d.getMinutes()).padStart(2, "0");
+        const s = String(d.getSeconds()).padStart(2, "0");
+        return h + ":" + m + ":" + s;
+    }
+
+    function appendLogEntry(entry)
+    {
+        const placeholder = logEntries.querySelector(".log-placeholder");
+        if (placeholder)
+        {
+            placeholder.remove();
+        }
+
+        const div = document.createElement("div");
+        div.className = "log-entry";
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "log-time";
+        timeSpan.textContent = formatLogTime(entry.ts);
+
+        const typeSpan = document.createElement("span");
+        typeSpan.className = "log-type log-type-" + (entry.type || "info");
+        typeSpan.textContent = entry.type || "info";
+
+        const msgSpan = document.createElement("span");
+        msgSpan.className = "log-msg";
+        msgSpan.textContent = entry.message;
+
+        div.appendChild(timeSpan);
+        div.appendChild(typeSpan);
+        div.appendChild(msgSpan);
+        logEntries.appendChild(div);
+
+        logEntries.scrollTop = logEntries.scrollHeight;
+    }
+
+    try
+    {
+        const evtSource = new EventSource("/api/logs/stream");
+        evtSource.onmessage = (e) =>
+        {
+            try
+            {
+                const entry = JSON.parse(e.data);
+                appendLogEntry(entry);
+            }
+            catch (_)
+            {
+            }
+        };
+        evtSource.onerror = () =>
+        {
+        };
+    }
+    catch (_)
+    {
+    }
+
     /* ===== Initial State ===== */
     updateAnalyzeButton();
 })();

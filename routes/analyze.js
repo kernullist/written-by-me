@@ -4,6 +4,14 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const { analyzeWithBatching } = require("../services/ai");
 
+function log(type, message)
+{
+    if (global.__wbmLogEvent)
+    {
+        global.__wbmLogEvent(type, message);
+    }
+}
+
 const router = express.Router();
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -44,6 +52,7 @@ router.post("/analyze", async (req, res) =>
     catch (err)
     {
         console.error("[analyze] AI call failed:", err.message);
+        log("error", "Analysis failed: " + err.message);
         res.status(500).json({ error: "AI analysis failed.", detail: err.message });
     }
 });

@@ -517,6 +517,75 @@ body {
     border: 1px solid rgba(248, 81, 73, 0.3);
 }
 
+/* Log Panel */
+
+.log-panel {
+    margin-top: 20px;
+}
+
+.log-entries {
+    padding: 8px 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.log-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    border-bottom: none;
+}
+
+.log-time {
+    color: var(--text-muted);
+    margin-right: 8px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.log-type {
+    display: inline-block;
+    min-width: 40px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    margin-right: 6px;
+    text-transform: uppercase;
+}
+
+.log-type-info {
+    color: var(--accent);
+}
+
+.log-type-warn {
+    color: var(--warning);
+}
+
+.log-type-error {
+    color: var(--danger);
+}
+
+.log-msg {
+    color: var(--text-primary);
+}
+
+.log-clear-btn {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+}
+
 @keyframes toastIn {
     from {
         opacity: 0;

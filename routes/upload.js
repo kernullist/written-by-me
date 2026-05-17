@@ -6,6 +6,14 @@ const { v4: uuidv4 } = require("uuid");
 const { extractText } = require("../services/textExtractor");
 const { analyzeWithBatching } = require("../services/ai");
 
+function log(type, message)
+{
+    if (global.__wbmLogEvent)
+    {
+        global.__wbmLogEvent(type, message);
+    }
+}
+
 const router = express.Router();
 
 const MAX_FILE_SIZE = (parseInt(process.env.MAX_FILE_SIZE_MB) || 10) * 1024 * 1024;
@@ -92,8 +100,9 @@ router.post("/upload", async (req, res) =>
             return res.status(400).json({ error: "No files provided." });
         }
 
-        try
-        {
+    try
+    {
+        log("info", `Analysis started: ${texts.length} sources, ${totalChars} total chars`);
             const results = [];
             for (const file of req.files)
             {
@@ -107,6 +116,8 @@ router.post("/upload", async (req, res) =>
                 textStore.set(fileId, { name: file.originalname, content: capped });
 
                 console.log(`[upload] Stored: ${file.originalname} (${text.length} chars, capped to ${capped.length})`);
+
+                log("info", `Uploaded: ${file.originalname} (${text.length} chars)`);
 
                 results.push({
                     id: fileId,
@@ -206,11 +217,14 @@ router.post("/analyze-with-paste", async (req, res) =>
             resp.missingFileIds = missingFileIds;
         }
 
+        log("info", `Analysis complete: ${skillMd.length} chars Skill.md generated (${strategy}, ${batches} batches)`);
+
         res.json(resp);
     }
     catch (err)
     {
         console.error("[analyze] AI call failed:", err.message);
+        log("error", "Analysis failed: " + err.message);
         res.status(500).json({ error: "AI analysis failed.", detail: err.message });
     }
 });
