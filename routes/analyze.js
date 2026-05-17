@@ -2,8 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-const { analyzeStyle } = require("../services/ai");
-const { buildPrompt } = require("../services/skillGenerator");
+const { analyzeWithBatching } = require("../services/ai");
 
 const router = express.Router();
 
@@ -26,18 +25,19 @@ router.post("/analyze", async (req, res) =>
 
     try
     {
-        const prompt = buildPrompt(texts, preferredLanguage || "auto");
-        const result = await analyzeStyle(prompt, model);
+        const { skillMd, strategy, batches } = await analyzeWithBatching(texts, preferredLanguage || "auto", model);
         const analysisId = uuidv4();
         const outputPath = path.join(__dirname, "..", "output", `${analysisId}.md`);
 
-        await fs.promises.writeFile(outputPath, result, "utf-8");
+        await fs.promises.writeFile(outputPath, skillMd, "utf-8");
 
         res.json({
             ok: true,
             analysisId,
+            strategy,
+            batches,
             analysis: {
-                skillMd: result
+                skillMd
             }
         });
     }

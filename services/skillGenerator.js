@@ -144,4 +144,75 @@ description: Writing style extracted from ${texts.length} document(s) across 13 
 ${textBlock}`;
 }
 
-module.exports = { buildPrompt };
+function estimateTokens(text)
+{
+    return Math.ceil(text.length / 3.5);
+}
+
+function buildMergePrompt(analyses, totalDocs, preferredLanguage)
+{
+    const langInstruction = preferredLanguage === "korean"
+        ? "The analysis and merged output should be written in Korean."
+        : preferredLanguage === "english"
+            ? "The analysis should be written in English."
+            : "Use the language of the source analyses.";
+
+    let analysesBlock = "";
+    for (let i = 0; i < analyses.length; i++)
+    {
+        analysesBlock += `\n=== BATCH ${i + 1} ANALYSIS ===\n${analyses[i]}\n`;
+    }
+
+    return `You are a writing style synthesist. You have received ${analyses.length} separate style analyses from different batches of the SAME author's texts (${totalDocs} total documents). Merge them into ONE coherent Skill.md. Follow these rules:
+
+1. Reconcile any conflicting observations across batches by looking for consensus patterns
+2. If a trait appears in multiple batches, it is a STRONG SIGNAL — emphasize it
+3. If a trait only appears in one batch, mention it as a weaker pattern
+4. Combine example phrases from all batches, selecting the 3-7 most representative ones
+5. Produce the final Skill.md in the EXACT format specified below
+6. ${langInstruction}
+
+Generate ONE unified Skill.md following this structure:
+
+---
+name: my-writing-style
+description: Writing style extracted from ${totalDocs} document(s) across ${analyses.length} analysis batches, then merged.
+---
+
+# My Writing Style
+
+## Lexical Patterns
+### Function Words
+### Vocabulary
+
+## Sentence Craft
+### Architecture
+### Voice & Perspective
+### Punctuation
+
+## Structure & Organization
+### Text Architecture
+### Lists & Enumeration
+
+## Tone & Rhetoric
+### Register & Tone
+### Rhetorical Style
+
+## Formatting & Conventions
+### Code Style
+### Language & Expression
+
+## Writing Guidelines
+[merged, actionable rules — each concrete and testable]
+
+## Example Phrases
+- "[best representative example 1]"
+- "[best representative example 2]"
+- "[best representative example 3]"
+- "[best representative example 4]"
+- "[best representative example 5]"
+
+${analysesBlock}`;
+}
+
+module.exports = { buildPrompt, estimateTokens, buildMergePrompt };

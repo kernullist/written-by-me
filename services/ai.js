@@ -1,3 +1,5 @@
+const { buildPrompt, estimateTokens, buildMergePrompt } = require("./skillGenerator");
+
 function getBaseUrl()
 {
     let url = process.env.OPENAI_BASE_URL || "https://api.deepseek.com/v1";
@@ -11,6 +13,23 @@ function getApiKey()
 
 const CONNECT_TIMEOUT_MS = 30000;
 const RESPONSE_TIMEOUT_MS = 300000;
+
+const MODEL_CONTEXT_WINDOWS = {
+    "deepseek-chat": 64000,
+    "deepseek-reasoner": 64000,
+    "gpt-4o": 128000,
+    "gpt-4o-mini": 128000,
+    "gpt-4-turbo": 128000,
+    "gpt-4": 8192,
+    "gpt-3.5-turbo": 16385,
+    "claude-3-opus": 200000,
+    "claude-3-sonnet": 200000,
+    "claude-3-haiku": 200000,
+    "claude-3.5-sonnet": 200000,
+    "o1": 200000,
+    "o1-mini": 128000,
+    "o3-mini": 200000
+};
 
 function fetchWithTimeout(url, options, timeoutMs)
 {
@@ -180,4 +199,90 @@ async function listModels()
     return chatModels;
 }
 
-module.exports = { analyzeStyle, listModels };
+async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
+{
+    const model = modelOverride || process.env.AI_MODEL || "deepseek-chat";
+    const maxTokens = parseInt(process.env.AI_MAX_TOKENS) || 8192;
+    const contextWindow = MODEL_CONTEXT_WINDOWS[model] || 64000;
+    const safetyMargin = Math.ceil(contextWindow * 0.15);
+    const availableForInput = contextWindow - maxTokens - safetyMargin;
+
+    const totalCount = allTexts.length;
+    if (totalCount === 0)
+    {
+        throw new Error("No texts to analyze.");
+    }
+
+    const fullPrompt = buildPrompt(allTexts, preferredLanguage);
+    const totalTokens = estimateTokens(fullPrompt);
+
+    console.log(`[ai] Texts: ${totalCount}, total chars: ${allTexts.reduce((s, t) => s + t.content.length, 0)}, est tokens: ${totalTokens}, available: ${availableForInput}`);
+
+    if (totalTokens <= availableForInput)
+    {
+        console.log("[ai] Strategy: single_pass");
+        const result = await analyzeStyle(fullPrompt, model);
+        return { skillMd: result, strategy: "single_pass", batches: 1 };
+    }
+
+    console.log("[ai] Strategy: batched");
+
+    const batches = [];
+    let currentBatch = [];
+    let currentTokens = 0;
+    const basePromptLen = fullPrompt.length - allTexts.reduce((s, t) =>
+    {
+        const truncated = t.content.length > 15000 ? 15000 : t.content.length;
+        return s + truncated + 50;
+    }, 0);
+
+    for (const text of allTexts)
+    {
+        const truncated = text.content.length > 15000
+            ? text.content.slice(0, 15000)
+            : text.content;
+        const entryTokens = estimateTokens(truncated) + 20;
+        const batchTokens = estimateTokens(buildPrompt([...currentBatch, text], preferredLanguage))
+            - estimateTokens(buildPrompt(currentBatch, preferredLanguage));
+
+        if (currentBatch.length > 0 && (currentTokens + entryTokens > availableForInput || currentBatch.length >= 5))
+        {
+            batches.push([...currentBatch]);
+            currentBatch = [];
+            currentTokens = 0;
+        }
+
+        currentBatch.push(text);
+        currentTokens += entryTokens;
+    }
+
+    if (currentBatch.length > 0)
+    {
+        batches.push([...currentBatch]);
+    }
+
+    if (batches.length === 1)
+    {
+        const result = await analyzeStyle(fullPrompt, model);
+        return { skillMd: result, strategy: "single_pass", batches: 1 };
+    }
+
+    console.log(`[ai] Split into ${batches.length} batches`);
+
+    const analyses = [];
+    for (let i = 0; i < batches.length; i++)
+    {
+        console.log(`[ai] Processing batch ${i + 1}/${batches.length} (${batches[i].length} sources)`);
+        const batchPrompt = buildPrompt(batches[i], preferredLanguage);
+        const analysis = await analyzeStyle(batchPrompt, model);
+        analyses.push(analysis);
+    }
+
+    console.log("[ai] Merging batch results...");
+    const mergePrompt = buildMergePrompt(analyses, totalCount, preferredLanguage);
+    const merged = await analyzeStyle(mergePrompt, model);
+
+    return { skillMd: merged, strategy: "batched", batches: batches.length };
+}
+
+module.exports = { analyzeStyle, listModels, analyzeWithBatching };

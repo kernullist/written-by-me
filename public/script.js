@@ -412,7 +412,10 @@
                 showToast(data.warning, "error");
             }
 
-            resultStatus.textContent = "Ready";
+            const strategyLabel = data.strategy === "batched"
+                ? ` (${data.batches} batches merged)`
+                : "";
+            resultStatus.textContent = "Ready" + strategyLabel;
             resultStatus.className = "badge badge-success";
             skillPreview.textContent = analysisResult;
             resultZone.classList.remove("hidden");
