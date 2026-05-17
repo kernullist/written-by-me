@@ -285,7 +285,7 @@
         try
         {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 180000);
+            const timeoutId = setTimeout(() => controller.abort(), 310000);
 
             const res = await fetch("/api/analyze-with-paste", {
                 method: "POST",
@@ -350,7 +350,7 @@
         {
             if (err.name === "AbortError")
             {
-                showToast("Analysis timed out after 3 minutes. Try with less content.", "error");
+                showToast("Analysis timed out (5 min limit). Try fewer files or a faster model.", "error");
             }
             else
             {

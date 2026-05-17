@@ -218,8 +218,8 @@ description: Writing style extracted from N document(s) across 13 stylometric di
 - Max 100,000 chars total input per analysis
 - Max 15,000 chars per source in the AI prompt (truncation applied)
 - AI max_tokens: 8192 (configurable via `AI_MAX_TOKENS`)
-- Server-side AI timeout: 180 seconds
-- Client-side analysis timeout: 180 seconds (AbortController)
+- Server-side AI timeout: 300 seconds
+- Client-side analysis timeout: 310 seconds (AbortController)
 
 ---
 
