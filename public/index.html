@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Written By Me - AI Writing Style Analyzer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <header class="header">
+    <h1>Written By Me</h1>
+    <p class="subtitle">Upload your documents. AI analyzes your style. You get a downloadable Skill.md.</p>
+  </header>
+
+  <div id="uploadZone" class="panel upload-panel">
+    <div class="panel-header">
+      <h2>1. Upload Documents</h2>
+      <span class="badge" id="fileCount">0 files</span>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" multiple accept=".txt,.md,.csv,.log,.cpp,.c,.h,.hpp,.cs,.java,.py,.js,.ts,.jsx,.tsx,.rs,.go,.rb,.php,.swift,.kt,.html,.css,.scss,.json,.xml,.yaml,.yml,.docx,.pdf" hidden>
+      <div class="drop-zone-content">
+        <span class="drop-icon">&plus;</span>
+        <p>Drag and drop files here</p>
+        <p class="drop-or">or</p>
+        <button type="button" class="btn btn-secondary" id="browseBtn">Browse Files</button>
+      </div>
+      <p class="supported-formats">Supported: .txt .md .docx .pdf .cpp .h .py .js .ts .java .cs .html .css .json .yaml .xml .csv .log</p>
+    </div>
+
+    <div class="upload-status" id="uploadStatus"></div>
+
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="panel paste-panel">
+    <div class="panel-header">
+      <h2>2. Paste Text</h2>
+      <span class="badge" id="pasteCharCount">0 chars</span>
+    </div>
+    <textarea id="pasteArea" placeholder="Paste any text here — emails, notes, blog posts, commit messages, code snippets...&#10;&#10;This will be included in the analysis along with uploaded files."></textarea>
+  </div>
+
+  <div class="action-bar">
+    <div class="model-selector">
+      <label for="modelSelect">Model:</label>
+      <select id="modelSelect">
+        <option value="">Loading models...</option>
+      </select>
+      <span class="model-status hidden" id="modelStatus"></span>
+    </div>
+    <button type="button" class="btn btn-primary btn-large" id="analyzeBtn" disabled>
+      <span class="btn-label">Analyze My Style</span>
+      <span class="btn-spinner hidden" id="btnSpinner"></span>
+    </button>
+  </div>
+
+  <div id="resultZone" class="panel result-panel hidden">
+    <div class="panel-header">
+      <h2>3. Your Skill.md</h2>
+      <span class="badge badge-success" id="resultStatus">Ready</span>
+    </div>
+
+    <div class="result-preview">
+      <pre class="skill-preview" id="skillPreview"></pre>
+    </div>
+
+    <div class="result-actions">
+      <button type="button" class="btn btn-primary" id="downloadBtn">
+        Download Skill.md
+      </button>
+      <button type="button" class="btn btn-secondary" id="copyBtn">
+        Copy to Clipboard
+      </button>
+      <button type="button" class="btn btn-secondary" id="newAnalysisBtn">
+        Start New Analysis
+      </button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+</div>
+
+<footer class="footer">
+  <p>Written By Me &mdash; Your writing style, distilled into a Skill.md for AI agents.</p>
+  <p class="footer-config" id="footerConfig"></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
