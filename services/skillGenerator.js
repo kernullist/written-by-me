@@ -86,7 +86,7 @@ description: [start with: "Auto-triggers on: write like me, 내 스타일, 문�
 
 The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords. This is how the AI agent activates this skill automatically.
 
-# My Writing Style
+The heading after the YAML frontmatter MUST be "# [skill-name]" — use the EXACT same name you chose for the "name" field. This is required for some agents to detect the skill.
 
 ## Lexical Patterns
 
@@ -183,7 +183,7 @@ description: [start with: "Auto-triggers on: write like me, 내 스타일, 문�
 
 The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords.
 
-# My Writing Style
+The heading after the YAML MUST be "# [skill-name]" — use the EXACT same name you chose for the "name" field.
 
 ## Lexical Patterns
 ### Function Words
