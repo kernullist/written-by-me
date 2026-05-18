@@ -68,6 +68,25 @@ body {
     overflow: hidden;
 }
 
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 4px 0 20px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
 .panel-header {
     display: flex;
     justify-content: space-between;
