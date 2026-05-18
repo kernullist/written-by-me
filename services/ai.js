@@ -92,7 +92,8 @@ async function analyzeStyle(prompt, modelOverride)
                 }
             ],
             temperature: 0.3,
-            max_tokens: maxTokens
+            max_tokens: maxTokens,
+            ...(model.includes("v4-pro") || model.includes("reasoner") ? { thinking: { type: "disabled" } } : {})
         })
     }, RESPONSE_TIMEOUT_MS);
 
