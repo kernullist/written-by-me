@@ -80,9 +80,11 @@ If no code is found, describe the general formatting patterns of prose text inst
 Now generate a Markdown Skill file that an AI agent can load to replicate this writer's style. Follow this structure EXACTLY:
 
 ---
-name: my-writing-style
-description: Writing style extracted from ${texts.length} document(s). Auto-triggers on writing requests: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투".
+name: [choose a short descriptive name based on the analysis, e.g. korean-tech-blog, casual-english-notes, formal-code-reviewer]
+description: [start with: "Auto-triggers on: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투. " then add a brief summary of the style, e.g. "Korean technical tutorial style with casual tone."]
 ---
+
+The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords. This is how the AI agent activates this skill automatically.
 
 # My Writing Style
 
@@ -175,9 +177,11 @@ function buildMergePrompt(analyses, totalDocs, preferredLanguage)
 Generate ONE unified Skill.md following this structure:
 
 ---
-name: my-writing-style
-description: Writing style extracted from ${totalDocs} document(s) across ${analyses.length} analysis batches, then merged. Auto-triggers on writing requests: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투".
+name: [choose a short descriptive name based on the merged analysis]
+description: [start with: "Auto-triggers on: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투. " then add a brief summary]
 ---
+
+The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords.
 
 # My Writing Style
 
