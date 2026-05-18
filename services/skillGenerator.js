@@ -81,10 +81,10 @@ Now generate a Markdown Skill file that an AI agent can load to replicate this w
 
 ---
 name: [choose a short descriptive name based on the analysis, e.g. korean-tech-blog, casual-english-notes, formal-code-reviewer]
-description: [start with: "Auto-triggers on: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투. " then add a brief summary of the style, e.g. "Korean technical tutorial style with casual tone."]
+description: [describe this skill in natural language. It must contain these trigger phrases somewhere in the text: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투". Then briefly describe the style: e.g. "Use when the user wants you to write in their personal style. Korean conversational tutorial tone with warm encouragement."]
 ---
 
-The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords. This is how the AI agent activates this skill automatically.
+The description MUST naturally include these trigger phrases: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투.
 
 The heading after the YAML frontmatter MUST be "# [skill-name]" — use the EXACT same name you chose for the "name" field. This is required for some agents to detect the skill.
 
@@ -178,10 +178,10 @@ Generate ONE unified Skill.md following this structure:
 
 ---
 name: [choose a short descriptive name based on the merged analysis]
-description: [start with: "Auto-triggers on: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투. " then add a brief summary]
+description: [natural language description. Must contain trigger phrases: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투". Then briefly summarize the merged style.]
 ---
 
-The description line is CRITICAL: it MUST begin with exactly "Auto-triggers on:" followed by the trigger keywords.
+The description MUST naturally include: write like me, 내 스타일, 문체, 글 작성, 써줘, 작성해, tutorial, blog post, writing style, 내 말투.
 
 The heading after the YAML MUST be "# [skill-name]" — use the EXACT same name you chose for the "name" field.
 
