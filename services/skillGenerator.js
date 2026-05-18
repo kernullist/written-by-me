@@ -81,7 +81,7 @@ Now generate a Markdown Skill file that an AI agent can load to replicate this w
 
 ---
 name: my-writing-style
-description: Writing style extracted from ${texts.length} document(s) across 13 stylometric dimensions.
+description: Writing style extracted from ${texts.length} document(s). Auto-triggers on writing requests: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투".
 ---
 
 # My Writing Style
@@ -176,7 +176,7 @@ Generate ONE unified Skill.md following this structure:
 
 ---
 name: my-writing-style
-description: Writing style extracted from ${totalDocs} document(s) across ${analyses.length} analysis batches, then merged.
+description: Writing style extracted from ${totalDocs} document(s) across ${analyses.length} analysis batches, then merged. Auto-triggers on writing requests: "write like me", "내 스타일", "문체", "글 작성", "써줘", "작성해", "tutorial", "blog post", "writing style", "내 말투".
 ---
 
 # My Writing Style
