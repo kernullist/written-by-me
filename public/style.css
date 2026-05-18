@@ -121,50 +121,48 @@ body {
 /* Upload Zone */
 
 .drop-zone {
-    padding: 32px 20px;
-    border: 2px dashed var(--border);
+    padding: 14px 20px;
+    border: 1px dashed var(--border);
     border-radius: var(--radius-sm);
-    margin: 16px 20px;
+    margin: 12px 20px;
     text-align: center;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 .drop-zone:hover,
 .drop-zone.drag-over {
     border-color: var(--accent);
     background: rgba(88, 166, 255, 0.05);
+    color: var(--text-primary);
 }
 
 .drop-zone-content {
     pointer-events: none;
 }
 
-.drop-icon {
-    font-size: 2rem;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 300;
+.btn-inline {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    text-decoration: underline;
+    padding: 0;
+    pointer-events: auto;
 }
 
-.drop-zone-content p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 4px;
+.btn-inline:hover {
+    color: var(--accent-hover);
 }
 
-.drop-or {
-    color: var(--text-muted) !important;
-    font-size: 0.8rem !important;
-    margin: 8px 0 !important;
-}
-
+.drop-icon,
+.drop-or,
 .supported-formats {
-    color: var(--text-muted) !important;
-    font-size: 0.72rem !important;
-    margin-top: 12px !important;
-    word-break: break-all;
+    display: none;
 }
 
 /* File List */
@@ -274,7 +272,7 @@ body {
 
 .paste-area {
     width: 100%;
-    min-height: 120px;
+    min-height: 200px;
     padding: 12px 14px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
