@@ -132,16 +132,17 @@ async function claudeCliAnalyze(fullPrompt, modelOverride)
 
 async function analyzeStyle(prompt, modelOverride)
 {
-    if (AI_PROVIDER === "claude_cli")
+    const model = modelOverride || process.env.AI_MODEL || "deepseek-chat";
+
+    if (AI_PROVIDER === "claude_cli" || (model && model.startsWith("claude-")))
     {
         const systemPrompt = "You are a writing style analyst. Your task is to analyze texts written by the same person and produce a comprehensive writing style profile in the exact Markdown format specified. Do not add commentary outside the requested format. Be precise and evidence-based in your analysis.";
         const fullPrompt = systemPrompt + "\n\n" + prompt;
-        return claudeCliAnalyze(fullPrompt, modelOverride);
+        return claudeCliAnalyze(fullPrompt, model);
     }
 
     const baseUrl = getBaseUrl();
     const apiKey = getApiKey();
-    const model = modelOverride || process.env.AI_MODEL || "deepseek-chat";
     const maxTokens = parseInt(process.env.AI_MAX_TOKENS) || 8192;
 
     console.log(`[ai] Sending prompt (${prompt.length} chars) to model: ${model}`);
@@ -227,70 +228,63 @@ async function analyzeStyle(prompt, modelOverride)
 
 async function listModels()
 {
+    const models = [];
+
     if (AI_PROVIDER === "claude_cli")
     {
-        return ["claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"];
+        models.push("claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001");
+        return models;
     }
 
     const baseUrl = getBaseUrl();
     const apiKey = getApiKey();
 
-    const response = await fetchWithTimeout(`${baseUrl}/models`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${apiKey}`
-        }
-    }, CONNECT_TIMEOUT_MS);
-
-    if (!response.ok)
+    try
     {
-        let errText;
-        try
-        {
-            errText = await response.text();
-            errText = errText.slice(0, 300);
-        }
-        catch (_)
-        {
-            errText = "(could not read error body)";
-        }
-        throw new Error(`Models API error ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-    if (!data.data || !Array.isArray(data.data))
-    {
-        throw new Error("Unexpected models API response structure.");
-    }
-
-    const excludePatterns = [
-        "embedding", "moderation", "dall-e", "tts", "whisper",
-        "audio", "babbage", "davinci", "instruct", "draft",
-        "omni-moderation", "gpt-3.5-turbo-instruct"
-    ];
-
-    const chatModels = data.data
-        .map((m) => m.id)
-        .filter((id) =>
-        {
-            const lower = id.toLowerCase();
-            for (const pat of excludePatterns)
-            {
-                if (lower.includes(pat))
-                {
-                    return false;
-                }
+        const response = await fetchWithTimeout(`${baseUrl}/models`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${apiKey}`
             }
-            return true;
-        })
-        .sort();
+        }, CONNECT_TIMEOUT_MS);
 
-    if (chatModels.length === 0)
+        if (response.ok)
+        {
+            const data = await response.json();
+            if (data.data && Array.isArray(data.data))
+            {
+                const excludePatterns = [
+                    "embedding", "moderation", "dall-e", "tts", "whisper",
+                    "audio", "babbage", "davinci", "instruct", "draft",
+                    "omni-moderation", "gpt-3.5-turbo-instruct"
+                ];
+
+                const chatModels = data.data
+                    .map((m) => m.id)
+                    .filter((id) =>
+                    {
+                        const lower = id.toLowerCase();
+                        for (const pat of excludePatterns)
+                        {
+                            if (lower.includes(pat))
+                            {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .sort();
+
+                models.push(...chatModels);
+            }
+        }
+    }
+    catch (_)
     {
-        return data.data.map((m) => m.id).sort();
     }
 
-    return chatModels;
+    models.push("---", "claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001");
+    return models;
 }
 
 async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
