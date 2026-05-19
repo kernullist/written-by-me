@@ -2,7 +2,7 @@
 
 **Your writing style, distilled into a Skill.md for AI agents.**
 
-![Before vs After](public/written_by_me_combined.png)
+![Before vs After](public/written_by_me_combined.png?v=2)
 
 Upload your documents (notes, emails, code, blog posts) -- the AI analyzes your writing across 13 stylometric dimensions and generates a portable `Skill.md` that any AI agent (Claude, OpenCode, Cline, GPT) can load to write in your voice.
 
