@@ -8,15 +8,22 @@ Upload your documents (notes, emails, code, blog posts) -- the AI analyzes your 
 
 ## Quick Start
 
+### Option A: API Mode (DeepSeek, OpenAI, etc.)
+
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Configure your API key
 cp .env.example .env
-# Edit .env → paste your DeepSeek or OpenAI-compatible API key
+# Edit .env → paste your API key
+npm start
+```
 
-# 3. Start
+### Option B: Claude CLI Mode (no API key)
+
+```bash
+npm install -g @anthropic-ai/claude-code   # if not already installed
+npm install
+cp .env.example .env
+# Edit .env → set AI_PROVIDER=claude_cli
 npm start
 ```
 
@@ -53,7 +60,7 @@ written-by-me/
     upload.js              # POST /api/upload, /analyze-with-paste, /clear
     analyze.js             # POST /api/analyze, GET /api/download/:id
   services/
-    ai.js                  # AI API calls (analyze + list models), timeouts, streaming errors
+    ai.js                  # AI API + Claude CLI calls, analyze, list models, timeouts, batching
     skillGenerator.js      # 13-dimension prompt engineering + source sanitization
     textExtractor.js       # .txt .md .docx .pdf extraction, EUC-KR auto-detect
   public/
@@ -65,15 +72,23 @@ written-by-me/
 ## Configuration (.env)
 
 ```env
-OPENAI_API_KEY=sk-xxx          # Required: DeepSeek or OpenAI-compatible key
-OPENAI_BASE_URL=...            # Optional: defaults to https://api.deepseek.com/v1
-AI_MODEL=deepseek-chat         # Optional: model override
-AI_MAX_TOKENS=8192             # Optional: output token limit
-PORT=3000                      # Optional: server port
-MAX_FILE_SIZE_MB=10            # Optional: per-file upload limit
+AI_PROVIDER=api                # "api" (default) or "claude_cli"
+
+# API mode
+OPENAI_API_KEY=sk-xxx          # Required for API mode
+OPENAI_BASE_URL=...            # Defaults to https://api.deepseek.com/v1
+AI_MODEL=deepseek-chat         # Model override (API) or claude-sonnet-4-6 (CLI)
+AI_MAX_TOKENS=8192             # Output token limit
+
+# Claude CLI mode (no key needed):
+# AI_PROVIDER=claude_cli
+# AI_MODEL=claude-sonnet-4-6   # or claude-opus-4-7 / claude-haiku-4-5-20251001
+
+PORT=3000
+MAX_FILE_SIZE_MB=10
 ```
 
-Also supports OpenAI, Groq, Ollama, and any OpenAI-compatible provider by changing `OPENAI_BASE_URL` and `AI_MODEL`.
+API mode supports DeepSeek, OpenAI, Groq, Ollama, and any OpenAI-compatible provider.
 
 ## Supported File Formats
 
@@ -85,9 +100,10 @@ Also supports OpenAI, Groq, Ollama, and any OpenAI-compatible provider by changi
 - 50,000 characters stored per file (server-side mem cap)
 - 100,000 characters total input per analysis
 - 15,000 characters per source in the AI prompt
-- 180-second timeout on AI calls (server + client)
+- 300-second server timeout on AI calls, 310-second client timeout
 
 ## Requirements
 
 - Node.js >= 18.0.0
-- DeepSeek or OpenAI-compatible API key
+- API key (DeepSeek, OpenAI, or compatible) **or** Claude CLI (`@anthropic-ai/claude-code`)
+- Optional: `claude` CLI in PATH for Claude CLI mode

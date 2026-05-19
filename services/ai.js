@@ -1,7 +1,4 @@
 const { spawn } = require("child_process");
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
 const { buildPrompt, estimateTokens, buildMergePrompt } = require("./skillGenerator");
 
 function log(type, message)
@@ -36,12 +33,13 @@ const MODEL_CONTEXT_WINDOWS = {
     "gpt-4-turbo": 128000,
     "gpt-4": 8192,
     "gpt-3.5-turbo": 16385,
+    "claude-sonnet-4-6": 1000000,
+    "claude-opus-4-7": 1000000,
+    "claude-haiku-4-5-20251001": 200000,
     "claude-3-opus": 200000,
     "claude-3-sonnet": 200000,
     "claude-3-haiku": 200000,
     "claude-3.5-sonnet": 200000,
-    "claude-4-sonnet": 200000,
-    "claude-4-opus": 200000,
     "o1": 200000,
     "o1-mini": 128000,
     "o3-mini": 200000
@@ -76,10 +74,7 @@ async function claudeCliAnalyze(fullPrompt, modelOverride)
     const model = modelOverride || "claude-sonnet-4-6";
 
     console.log(`[ai] Sending prompt (${fullPrompt.length} chars) via Claude CLI`);
-
-    const tmpDir = os.tmpdir();
-    const promptFile = path.join(tmpDir, `wbm_prompt_${Date.now()}.txt`);
-    fs.writeFileSync(promptFile, fullPrompt, "utf-8");
+    log("info", `Sending ${fullPrompt.length} chars via Claude CLI`);
 
     return new Promise((resolve, reject) =>
     {
@@ -97,9 +92,6 @@ async function claudeCliAnalyze(fullPrompt, modelOverride)
 
         child.on("close", (code) =>
         {
-            try { fs.unlinkSync(promptFile); }
-            catch (_) {}
-
             const output = Buffer.concat(stdout).toString("utf-8").trim();
             const errOutput = Buffer.concat(stderr).toString("utf-8").trim();
 
@@ -122,9 +114,6 @@ async function claudeCliAnalyze(fullPrompt, modelOverride)
 
         child.on("error", (err) =>
         {
-            try { fs.unlinkSync(promptFile); }
-            catch (_) {}
-
             if (err.code === "ENOENT")
             {
                 reject(new Error("Claude CLI not found. Install with: npm i -g @anthropic-ai/claude-code"));
@@ -337,11 +326,6 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
     const batches = [];
     let currentBatch = [];
     let currentTokens = 0;
-    const basePromptLen = fullPrompt.length - allTexts.reduce((s, t) =>
-    {
-        const truncated = t.content.length > 15000 ? 15000 : t.content.length;
-        return s + truncated + 50;
-    }, 0);
 
     for (const text of allTexts)
     {
@@ -349,8 +333,6 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
             ? text.content.slice(0, 15000)
             : text.content;
         const entryTokens = estimateTokens(truncated) + 20;
-        const batchTokens = estimateTokens(buildPrompt([...currentBatch, text], preferredLanguage))
-            - estimateTokens(buildPrompt(currentBatch, preferredLanguage));
 
         if (currentBatch.length > 0 && (currentTokens + entryTokens > availableForInput || currentBatch.length >= 5))
         {
