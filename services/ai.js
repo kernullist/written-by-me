@@ -228,12 +228,12 @@ async function analyzeStyle(prompt, modelOverride)
 
 async function listModels()
 {
-    const models = [];
+    const apiModels = [];
+    const claudeModels = ["claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"];
 
     if (AI_PROVIDER === "claude_cli")
     {
-        models.push("claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001");
-        return models;
+        return { defaultModel: "claude-sonnet-4-6", groups: [{ label: "Claude CLI", models: claudeModels }] };
     }
 
     const baseUrl = getBaseUrl();
@@ -275,7 +275,7 @@ async function listModels()
                     })
                     .sort();
 
-                models.push(...chatModels);
+                apiModels.push(...chatModels);
             }
         }
     }
@@ -283,8 +283,14 @@ async function listModels()
     {
     }
 
-    models.push("---", "claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001");
-    return models;
+    const groups = [];
+    if (apiModels.length > 0)
+    {
+        groups.push({ label: "API Models", models: apiModels });
+    }
+    groups.push({ label: "Claude CLI", models: claudeModels });
+
+    return { defaultModel: process.env.AI_MODEL || "deepseek-chat", groups };
 }
 
 async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)

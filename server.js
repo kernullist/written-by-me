@@ -55,7 +55,7 @@ const MODEL_CACHE_TTL_MS = 3600000;
 app.get("/api/config", async (_req, res) =>
 {
     const defaultModel = process.env.AI_MODEL || "deepseek-chat";
-    let models = [defaultModel];
+    let models = { defaultModel, groups: [{ label: "API", models: [defaultModel] }] };
 
     const now = Date.now();
     if (cachedModels && (now - cachedModelsAt) < MODEL_CACHE_TTL_MS)
@@ -78,8 +78,8 @@ app.get("/api/config", async (_req, res) =>
 
     res.json({
         provider: AI_PROVIDER,
-        model: defaultModel,
-        models,
+        model: models.defaultModel || defaultModel,
+        groups: models.groups,
         maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB) || 10
     });
 });

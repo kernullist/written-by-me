@@ -37,21 +37,27 @@
         {
             footerConfig.textContent = "Provider: " + (cfg.provider === "claude_cli" ? "Claude CLI" : "API") + " | Model: " + (cfg.model || "deepseek-chat");
 
-            if (cfg.models && cfg.models.length > 0)
+            if (cfg.groups && cfg.groups.length > 0)
             {
                 modelSelect.innerHTML = "";
-                for (const m of cfg.models)
+                for (const group of cfg.groups)
                 {
-                    const opt = document.createElement("option");
-                    opt.value = m;
-                    opt.textContent = m;
-                    if (m === cfg.model)
+                    const optgroup = document.createElement("optgroup");
+                    optgroup.label = group.label;
+                    for (const m of group.models)
                     {
-                        opt.selected = true;
+                        const opt = document.createElement("option");
+                        opt.value = m;
+                        opt.textContent = m;
+                        if (m === cfg.model)
+                        {
+                            opt.selected = true;
+                        }
+                        optgroup.appendChild(opt);
                     }
-                    modelSelect.appendChild(opt);
+                    modelSelect.appendChild(optgroup);
                 }
-                selectedModel = modelSelect.value;
+                selectedModel = modelSelect.value || cfg.model;
                 if (modelStatus)
                 {
                     modelStatus.textContent = cfg.models.length + " models";
