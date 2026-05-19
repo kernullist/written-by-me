@@ -5,7 +5,7 @@ const path = require("path");
 const { EventEmitter } = require("events");
 const express = require("express");
 const cors = require("cors");
-const { listModels } = require("./services/ai");
+const { listModels, AI_PROVIDER } = require("./services/ai");
 
 const app = express();
 
@@ -77,6 +77,7 @@ app.get("/api/config", async (_req, res) =>
     }
 
     res.json({
+        provider: AI_PROVIDER,
         model: defaultModel,
         models,
         maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB) || 10
@@ -128,6 +129,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
 {
     console.log(`[WrittenByMe] Server running at http://localhost:${PORT}`);
+    console.log(`[WrittenByMe] Provider: ${AI_PROVIDER === "claude_cli" ? "Claude CLI" : (process.env.OPENAI_BASE_URL || "https://api.deepseek.com/v1")}`);
     console.log(`[WrittenByMe] Model: ${process.env.AI_MODEL || "deepseek-chat"}`);
-    console.log(`[WrittenByMe] Provider: ${process.env.OPENAI_BASE_URL || "https://api.deepseek.com/v1"}`);
 });

@@ -35,7 +35,7 @@
         .then((r) => r.json())
         .then((cfg) =>
         {
-            footerConfig.textContent = "Model: " + (cfg.model || "deepseek-chat");
+            footerConfig.textContent = "Provider: " + (cfg.provider === "claude_cli" ? "Claude CLI" : "API") + " | Model: " + (cfg.model || "deepseek-chat");
 
             if (cfg.models && cfg.models.length > 0)
             {

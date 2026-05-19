@@ -1,3 +1,7 @@
+const { spawn } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 const { buildPrompt, estimateTokens, buildMergePrompt } = require("./skillGenerator");
 
 function log(type, message)
@@ -7,6 +11,8 @@ function log(type, message)
         global.__wbmLogEvent(type, message);
     }
 }
+
+const AI_PROVIDER = process.env.AI_PROVIDER || "api";
 
 function getBaseUrl()
 {
@@ -34,6 +40,8 @@ const MODEL_CONTEXT_WINDOWS = {
     "claude-3-sonnet": 200000,
     "claude-3-haiku": 200000,
     "claude-3.5-sonnet": 200000,
+    "claude-4-sonnet": 200000,
+    "claude-4-opus": 200000,
     "o1": 200000,
     "o1-mini": 128000,
     "o3-mini": 200000
@@ -63,8 +71,85 @@ function fetchWithTimeout(url, options, timeoutMs)
     });
 }
 
+async function claudeCliAnalyze(fullPrompt, modelOverride)
+{
+    const model = modelOverride || "claude-sonnet-4-20250514";
+
+    console.log(`[ai] Sending prompt (${fullPrompt.length} chars) via Claude CLI`);
+
+    const tmpDir = os.tmpdir();
+    const promptFile = path.join(tmpDir, `wbm_prompt_${Date.now()}.txt`);
+    fs.writeFileSync(promptFile, fullPrompt, "utf-8");
+
+    return new Promise((resolve, reject) =>
+    {
+        const child = spawn("claude", ["-p", "--output-format", "markdown", "--model", model], {
+            stdio: ["pipe", "pipe", "pipe"],
+            timeout: RESPONSE_TIMEOUT_MS,
+            windowsHide: true
+        });
+
+        const stdout = [];
+        const stderr = [];
+
+        child.stdout.on("data", (chunk) => stdout.push(chunk));
+        child.stderr.on("data", (chunk) => stderr.push(chunk));
+
+        child.on("close", (code) =>
+        {
+            try { fs.unlinkSync(promptFile); }
+            catch (_) {}
+
+            const output = Buffer.concat(stdout).toString("utf-8").trim();
+            const errOutput = Buffer.concat(stderr).toString("utf-8").trim();
+
+            if (code !== 0)
+            {
+                log("error", `Claude CLI exit code ${code}: ${errOutput}`);
+                reject(new Error(`Claude CLI failed (exit ${code}): ${errOutput.slice(0, 300)}`));
+                return;
+            }
+
+            if (!output)
+            {
+                reject(new Error("Claude CLI returned empty output."));
+                return;
+            }
+
+            log("info", `Claude CLI response: ${output.length} chars`);
+            resolve(output);
+        });
+
+        child.on("error", (err) =>
+        {
+            try { fs.unlinkSync(promptFile); }
+            catch (_) {}
+
+            if (err.code === "ENOENT")
+            {
+                reject(new Error("Claude CLI not found. Install with: npm i -g @anthropic-ai/claude-code"));
+            }
+            else
+            {
+                reject(new Error(`Claude CLI error: ${err.message}`));
+            }
+        });
+
+        const stdinContent = fullPrompt;
+        child.stdin.write(stdinContent);
+        child.stdin.end();
+    });
+}
+
 async function analyzeStyle(prompt, modelOverride)
 {
+    if (AI_PROVIDER === "claude_cli")
+    {
+        const systemPrompt = "You are a writing style analyst. Your task is to analyze texts written by the same person and produce a comprehensive writing style profile in the exact Markdown format specified. Do not add commentary outside the requested format. Be precise and evidence-based in your analysis.";
+        const fullPrompt = systemPrompt + "\n\n" + prompt;
+        return claudeCliAnalyze(fullPrompt, modelOverride);
+    }
+
     const baseUrl = getBaseUrl();
     const apiKey = getApiKey();
     const model = modelOverride || process.env.AI_MODEL || "deepseek-chat";
@@ -153,6 +238,11 @@ async function analyzeStyle(prompt, modelOverride)
 
 async function listModels()
 {
+    if (AI_PROVIDER === "claude_cli")
+    {
+        return ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-haiku-4-20250514"];
+    }
+
     const baseUrl = getBaseUrl();
     const apiKey = getApiKey();
 
@@ -218,7 +308,7 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
 {
     const model = modelOverride || process.env.AI_MODEL || "deepseek-chat";
     const maxTokens = parseInt(process.env.AI_MAX_TOKENS) || 8192;
-    const contextWindow = MODEL_CONTEXT_WINDOWS[model] || 64000;
+    const contextWindow = MODEL_CONTEXT_WINDOWS[model] || (AI_PROVIDER === "claude_cli" ? 200000 : 64000);
     const safetyMargin = Math.ceil(contextWindow * 0.15);
     const availableForInput = contextWindow - maxTokens - safetyMargin;
 
@@ -305,4 +395,4 @@ async function analyzeWithBatching(allTexts, preferredLanguage, modelOverride)
     return { skillMd: merged, strategy: "batched", batches: batches.length };
 }
 
-module.exports = { analyzeStyle, listModels, analyzeWithBatching };
+module.exports = { analyzeStyle, listModels, analyzeWithBatching, AI_PROVIDER };
