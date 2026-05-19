@@ -73,7 +73,7 @@ function fetchWithTimeout(url, options, timeoutMs)
 
 async function claudeCliAnalyze(fullPrompt, modelOverride)
 {
-    const model = modelOverride || "claude-sonnet-4-20250514";
+    const model = modelOverride || "claude-sonnet-4-6-20250514";
 
     console.log(`[ai] Sending prompt (${fullPrompt.length} chars) via Claude CLI`);
 
@@ -240,7 +240,7 @@ async function listModels()
 {
     if (AI_PROVIDER === "claude_cli")
     {
-        return ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-haiku-4-20250514"];
+        return ["claude-sonnet-4-6-20250514", "claude-opus-4-7-20250514", "claude-haiku-4-6-20250514"];
     }
 
     const baseUrl = getBaseUrl();
