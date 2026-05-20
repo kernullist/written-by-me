@@ -30,14 +30,11 @@
     let analysisId = null;
     let selectedModel = null;
 
-    console.log("[WrittenByMe] script.js v3 loaded");
-
     /* ===== Model Selector & Footer ===== */
     fetch("/api/config")
         .then((r) => r.json())
         .then((cfg) =>
         {
-            console.log("[WrittenByMe] config loaded:", cfg);
             footerConfig.textContent = "Provider: " + (cfg.provider === "claude_cli" ? "Claude CLI" : "API") + " | Model: " + (cfg.model || "deepseek-chat");
 
             if (cfg.groups && cfg.groups.length > 0)
@@ -63,7 +60,12 @@
                 selectedModel = modelSelect.value || cfg.model;
                 if (modelStatus)
                 {
-                    modelStatus.textContent = cfg.models.length + " models";
+                    let total = 0;
+                    for (const g of cfg.groups)
+                    {
+                        total += g.models.length;
+                    }
+                    modelStatus.textContent = total + " models";
                     modelStatus.classList.remove("hidden");
                 }
             }
@@ -88,9 +90,8 @@
                 }
             });
         })
-        .catch((err) =>
+        .catch(() =>
         {
-            console.error("[WrittenByMe] config fetch failed:", err);
             footerConfig.textContent = "Model: deepseek-chat";
             modelSelect.innerHTML = '<option value="deepseek-chat">deepseek-chat</option>';
             selectedModel = "deepseek-chat";
