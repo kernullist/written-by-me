@@ -78,7 +78,7 @@ async function claudeCliAnalyze(fullPrompt, modelOverride)
 
     return new Promise((resolve, reject) =>
     {
-        const child = spawn("claude", ["-p", "--output-format", "markdown", "--model", model], {
+        const child = spawn("claude", ["-p", "--output-format", "text", "--model", model], {
             stdio: ["pipe", "pipe", "pipe"],
             timeout: RESPONSE_TIMEOUT_MS,
             windowsHide: true
