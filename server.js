@@ -55,7 +55,14 @@ const MODEL_CACHE_TTL_MS = 3600000;
 app.get("/api/config", async (_req, res) =>
 {
     const defaultModel = process.env.AI_MODEL || "deepseek-chat";
-    let models = { defaultModel, groups: [{ label: "API", models: [defaultModel] }] };
+    const claudeModels = ["claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5-20251001"];
+    let models = {
+        defaultModel,
+        groups: [
+            { label: "API Models", models: [defaultModel] },
+            { label: "Claude CLI", models: claudeModels }
+        ]
+    };
 
     const now = Date.now();
     if (cachedModels && (now - cachedModelsAt) < MODEL_CACHE_TTL_MS)
