@@ -20,7 +20,11 @@ fs.mkdirSync(path.join(__dirname, "output"), { recursive: true });
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => res.setHeader("Cache-Control", "no-store, must-revalidate")
+}));
 
 const logEmitter = new EventEmitter();
 const MAX_LOG_ENTRIES = 200;
