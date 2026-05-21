@@ -5,6 +5,7 @@ const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const { extractText } = require("../services/textExtractor");
 const { analyzeWithBatching } = require("../services/ai");
+const { fetchUrlContent } = require("../services/urlFetcher");
 
 function log(type, message)
 {
@@ -44,6 +45,7 @@ const ALLOWED_EXTENSIONS = [
 ];
 
 const textStore = new Map();
+const urlStore = new Map();
 
 const storage = multer.diskStorage({
     destination: path.join(__dirname, "..", "uploads"),
@@ -137,7 +139,7 @@ router.post("/upload", async (req, res) =>
 
 router.post("/analyze-with-paste", async (req, res) =>
 {
-    const { fileIds, pasteTexts, pastedText, model, preferredLanguage } = req.body;
+    const { fileIds, pasteTexts, pastedText, urlIds, model, preferredLanguage } = req.body;
     const texts = [];
     const missingFileIds = [];
 
@@ -155,6 +157,18 @@ router.post("/analyze-with-paste", async (req, res) =>
     else if (pastedText && pastedText.trim().length > 0)
     {
         texts.push({ source: "pasted-text", content: pastedText.trim() });
+    }
+
+    if (urlIds && Array.isArray(urlIds))
+    {
+        for (const urlId of urlIds)
+        {
+            const stored = urlStore.get(urlId);
+            if (stored)
+            {
+                texts.push({ source: "[URL] " + stored.name, content: stored.content });
+            }
+        }
     }
 
     if (fileIds && Array.isArray(fileIds))
@@ -229,10 +243,64 @@ router.post("/analyze-with-paste", async (req, res) =>
     }
 });
 
+router.post("/fetch-url", async (req, res) =>
+{
+    const { url } = req.body;
+
+    if (!url || typeof url !== "string")
+    {
+        return res.status(400).json({ error: "URL is required." });
+    }
+
+    let parsed;
+    try
+    {
+        parsed = new URL(url);
+    }
+    catch (_)
+    {
+        return res.status(400).json({ error: "Invalid URL." });
+    }
+
+    if (!parsed.protocol.startsWith("http"))
+    {
+        return res.status(400).json({ error: "Only http/https URLs are supported." });
+    }
+
+    try
+    {
+        log("info", "Fetching URL: " + url);
+        const { title, text } = await fetchUrlContent(url);
+        const id = uuidv4();
+        const source = title.length > 80 ? title.slice(0, 80) + "..." : title;
+
+        const capped = text.length > MAX_STORED_CONTENT
+            ? text.slice(0, MAX_STORED_CONTENT)
+            : text;
+
+        urlStore.set(id, { url, name: source, content: capped });
+
+        log("info", `URL fetched: ${source} (${text.length} chars, capped to ${capped.length})`);
+
+        res.json({
+            ok: true,
+            id,
+            title: source,
+            charCount: text.length
+        });
+    }
+    catch (err)
+    {
+        log("error", "URL fetch failed: " + err.message);
+        res.status(500).json({ error: "Failed to fetch URL.", detail: err.message });
+    }
+});
+
 router.post("/clear", (_req, res) =>
 {
-    const count = textStore.size;
+    const count = textStore.size + urlStore.size;
     textStore.clear();
+    urlStore.clear();
 
     const dir = path.join(__dirname, "..", "uploads");
     try

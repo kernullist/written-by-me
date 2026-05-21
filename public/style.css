@@ -323,6 +323,90 @@ body {
     border-top: 1px solid var(--border);
 }
 
+/* URL Input */
+
+.url-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+}
+
+.url-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.url-input:focus {
+    border-color: var(--accent);
+}
+
+.url-input::placeholder {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+}
+
+.url-list {
+    padding: 0 20px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 0;
+}
+
+.url-list:empty {
+    padding: 0 20px;
+}
+
+.url-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    max-width: 100%;
+}
+
+.url-chip.loading {
+    border-color: var(--warning);
+    opacity: 0.7;
+}
+
+.url-chip.error {
+    border-color: var(--danger);
+}
+
+.url-chip-name {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.url-chip-remove {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color 0.15s;
+}
+
+.url-chip-remove:hover {
+    color: var(--danger);
+}
+
 /* Buttons */
 
 .btn {

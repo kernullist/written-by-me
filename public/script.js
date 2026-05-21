@@ -24,8 +24,13 @@
     const footerConfig = document.getElementById("footerConfig");
     const modelSelect = document.getElementById("modelSelect");
     const modelStatus = document.getElementById("modelStatus");
+    const urlInput = document.getElementById("urlInput");
+    const addUrlBtn = document.getElementById("addUrlBtn");
+    const urlList = document.getElementById("urlList");
+    const urlCount = document.getElementById("urlCount");
 
     let uploadedFiles = [];
+    let urlEntries = [];
     let analysisResult = null;
     let analysisId = null;
     let selectedModel = null;
@@ -325,10 +330,114 @@
     pasteEntries.querySelector(".paste-area").addEventListener("input", updatePasteStats);
     updateRemoveButtons();
 
+    /* ===== URL Input ===== */
+
+    async function fetchUrl()
+    {
+        const url = urlInput.value.trim();
+        if (!url)
+        {
+            return;
+        }
+
+        urlInput.value = "";
+        addUrlBtn.disabled = true;
+        urlInput.disabled = true;
+
+        const chip = document.createElement("div");
+        chip.className = "url-chip loading";
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "url-chip-name";
+        nameSpan.textContent = url;
+        nameSpan.title = url;
+        chip.appendChild(nameSpan);
+        urlList.appendChild(chip);
+        updateUrlCount();
+
+        try
+        {
+            const res = await fetch("/api/fetch-url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.ok)
+            {
+                throw new Error(data.error || "Fetch failed.");
+            }
+
+            chip.classList.remove("loading");
+            nameSpan.textContent = data.title;
+            nameSpan.title = url;
+
+            const removeSpan = document.createElement("span");
+            removeSpan.className = "url-chip-remove";
+            removeSpan.textContent = "\u00d7";
+            removeSpan.title = "Remove";
+            const entryId = data.id;
+            removeSpan.addEventListener("click", () =>
+            {
+                chip.remove();
+                urlEntries = urlEntries.filter((e) => e.id !== entryId);
+                updateUrlCount();
+                updateAnalyzeButton();
+            });
+            chip.appendChild(removeSpan);
+
+            urlEntries.push({ id: data.id, title: data.title, url });
+            updateAnalyzeButton();
+        }
+        catch (err)
+        {
+            chip.classList.remove("loading");
+            chip.classList.add("error");
+            const removeSpan = document.createElement("span");
+            removeSpan.className = "url-chip-remove";
+            removeSpan.textContent = "\u00d7";
+            removeSpan.title = "Remove";
+            removeSpan.addEventListener("click", () =>
+            {
+                chip.remove();
+                updateUrlCount();
+                updateAnalyzeButton();
+            });
+            chip.appendChild(removeSpan);
+            showToast(err.message, "error");
+        }
+        finally
+        {
+            addUrlBtn.disabled = false;
+            urlInput.disabled = false;
+            urlInput.focus();
+        }
+
+        updateUrlCount();
+    }
+
+    addUrlBtn.addEventListener("click", fetchUrl);
+    urlInput.addEventListener("keydown", (e) =>
+    {
+        if (e.key === "Enter")
+        {
+            e.preventDefault();
+            fetchUrl();
+        }
+    });
+
+    function updateUrlCount()
+    {
+        const chips = urlList.querySelectorAll(".url-chip:not(.error)");
+        urlCount.textContent = chips.length + " URL" + (chips.length !== 1 ? "s" : "");
+    }
+
     /* ===== Analyze Button ===== */
     function updateAnalyzeButton()
     {
         const hasFiles = uploadedFiles.length > 0;
+        const hasUrls = urlEntries.length > 0;
         let hasPaste = false;
         const areas = pasteEntries.querySelectorAll(".paste-area");
         for (const area of areas)
@@ -340,7 +449,7 @@
             }
         }
 
-        analyzeBtn.disabled = !(hasFiles || hasPaste);
+        analyzeBtn.disabled = !(hasFiles || hasPaste || hasUrls);
     }
 
     analyzeBtn.addEventListener("click", runAnalysis);
@@ -358,8 +467,9 @@
             }
         }
         const hasFiles = uploadedFiles.length > 0;
+        const hasUrls = urlEntries.length > 0;
 
-        if (!hasFiles && !hasPaste)
+        if (!hasFiles && !hasPaste && !hasUrls)
         {
             return;
         }
@@ -389,6 +499,7 @@
 
         const body = {
             fileIds: uploadedFiles.map((f) => f.id),
+            urlIds: urlEntries.map((u) => u.id),
             pasteTexts: pasteTexts,
             model: selectedModel
         };
@@ -508,8 +619,13 @@
     newAnalysisBtn.addEventListener("click", () =>
     {
         uploadedFiles = [];
+        urlEntries = [];
         analysisResult = null;
         analysisId = null;
+
+        urlInput.value = "";
+        urlList.innerHTML = "";
+        updateUrlCount();
 
         pasteEntries.innerHTML = "";
         const entry = document.createElement("div");
