@@ -687,6 +687,71 @@ body {
     padding: 4px 10px;
 }
 
+/* Translate Panel */
+
+.translate-panel {
+    margin-top: 20px;
+}
+
+.translate-controls {
+    display: flex;
+    gap: 16px;
+}
+
+.direction-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.direction-label input[type="radio"] {
+    accent-color: var(--accent);
+}
+
+.translate-input {
+    width: 100%;
+    min-height: 160px;
+    padding: 14px 20px;
+    background: var(--bg-primary);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+}
+
+.translate-input::placeholder {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+}
+
+.translate-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.translate-status {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.translate-output {
+    padding: 16px 20px;
+}
+
+.translate-output pre {
+    max-height: 400px;
+}
+
 @keyframes toastIn {
     from {
         opacity: 0;

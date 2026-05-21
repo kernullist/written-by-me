@@ -102,6 +102,28 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <div id="translateZone" class="panel translate-panel hidden">
+    <div class="panel-header">
+      <h2>Style Translate</h2>
+      <div class="translate-controls">
+        <label class="direction-label">
+          <input type="radio" name="translateDir" value="en2kr" checked> EN → KR
+        </label>
+        <label class="direction-label">
+          <input type="radio" name="translateDir" value="kr2en"> KR → EN
+        </label>
+      </div>
+    </div>
+    <textarea class="translate-input" id="translateInput" placeholder="Paste text to translate using your writing style..."></textarea>
+    <div class="translate-actions">
+      <button type="button" class="btn btn-primary" id="translateBtn">Translate</button>
+      <span class="translate-status" id="translateStatus"></span>
+    </div>
+    <div class="translate-output hidden" id="translateOutput">
+      <pre class="skill-preview" id="translatePreview"></pre>
+    </div>
+  </div>
+
   <div id="logPanel" class="panel log-panel">
     <div class="panel-header">
       <h2>Activity Log</h2>

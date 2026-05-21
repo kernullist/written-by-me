@@ -4,7 +4,7 @@ const express = require("express");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const { extractText } = require("../services/textExtractor");
-const { analyzeWithBatching } = require("../services/ai");
+const { analyzeWithBatching, analyzeStyle } = require("../services/ai");
 const { fetchUrlContent } = require("../services/urlFetcher");
 
 function log(type, message)
@@ -326,6 +326,47 @@ router.post("/clear", (_req, res) =>
     catch (_) {}
 
     res.json({ ok: true, cleared: count });
+});
+
+router.post("/translate", async (req, res) =>
+{
+    const { text, direction, skillMd, model } = req.body;
+
+    if (!text || !text.trim())
+    {
+        return res.status(400).json({ error: "No text to translate." });
+    }
+
+    if (!skillMd)
+    {
+        return res.status(400).json({ error: "No style reference. Run an analysis first." });
+    }
+
+    const dirLabel = direction === "kr2en" ? "Korean to English" : "English to Korean";
+    const targetLang = direction === "kr2en" ? "English" : "Korean";
+
+    const prompt = `Translate the following text to ${targetLang}. The translation MUST be written in exactly this writing style:
+
+${skillMd}
+
+TEXT TO TRANSLATE:
+${text.trim()}
+
+Return ONLY the translated text with no additional commentary.`;
+
+    try
+    {
+        log("info", `Translation started: ${dirLabel} (${text.length} chars)`);
+        const result = await analyzeStyle(prompt, model);
+        log("info", `Translation complete: ${result.length} chars`);
+        res.json({ ok: true, translated: result });
+    }
+    catch (err)
+    {
+        console.error("[translate] Failed:", err.message);
+        log("error", "Translation failed: " + err.message);
+        res.status(500).json({ error: "Translation failed.", detail: err.message });
+    }
 });
 
 module.exports = router;

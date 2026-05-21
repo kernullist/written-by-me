@@ -28,6 +28,12 @@
     const addUrlBtn = document.getElementById("addUrlBtn");
     const urlList = document.getElementById("urlList");
     const urlCount = document.getElementById("urlCount");
+    const translateZone = document.getElementById("translateZone");
+    const translateInput = document.getElementById("translateInput");
+    const translateBtn = document.getElementById("translateBtn");
+    const translateStatus = document.getElementById("translateStatus");
+    const translateOutput = document.getElementById("translateOutput");
+    const translatePreview = document.getElementById("translatePreview");
 
     let uploadedFiles = [];
     let urlEntries = [];
@@ -541,6 +547,10 @@
             resultStatus.className = "badge badge-success";
             skillPreview.textContent = analysisResult;
             resultZone.classList.remove("hidden");
+            translateZone.classList.remove("hidden");
+            translateInput.value = "";
+            translateOutput.classList.add("hidden");
+            translateStatus.textContent = "";
 
             downloadBtn.onclick = async () =>
             {
@@ -615,6 +625,63 @@
         });
     });
 
+    /* ===== Style Translate ===== */
+
+    translateBtn.addEventListener("click", async () =>
+    {
+        const text = translateInput.value.trim();
+        if (!text)
+        {
+            return;
+        }
+
+        if (!analysisResult)
+        {
+            showToast("Run an analysis first to generate your style.", "error");
+            return;
+        }
+
+        const direction = document.querySelector("input[name='translateDir']:checked").value;
+
+        translateBtn.disabled = true;
+        translateStatus.textContent = "Translating...";
+        translateOutput.classList.add("hidden");
+
+        try
+        {
+            const res = await fetch("/api/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text,
+                    direction,
+                    skillMd: analysisResult,
+                    model: selectedModel
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.ok)
+            {
+                throw new Error(data.error || "Translation failed.");
+            }
+
+            translatePreview.textContent = data.translated;
+            translateOutput.classList.remove("hidden");
+            translateStatus.textContent = "Done.";
+        }
+        catch (err)
+        {
+            showToast(err.message, "error");
+            translateStatus.textContent = "Failed.";
+        }
+        finally
+        {
+            translateBtn.disabled = false;
+        }
+    });
+
     /* ===== New Analysis Button ===== */
     newAnalysisBtn.addEventListener("click", () =>
     {
@@ -661,6 +728,7 @@
         updateAnalyzeButton();
         updateRemoveButtons();
         resultZone.classList.add("hidden");
+        translateZone.classList.add("hidden");
         uploadStatus.textContent = "";
         uploadStatus.className = "upload-status";
         window.scrollTo({ top: 0, behavior: "smooth" });
