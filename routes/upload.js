@@ -142,6 +142,7 @@ router.post("/analyze-with-paste", async (req, res) =>
     const { fileIds, pasteTexts, pastedText, urlIds, model, preferredLanguage } = req.body;
     const texts = [];
     const missingFileIds = [];
+    const missingUrlIds = [];
 
     if (pasteTexts && Array.isArray(pasteTexts))
     {
@@ -168,6 +169,10 @@ router.post("/analyze-with-paste", async (req, res) =>
             {
                 texts.push({ source: "[URL] " + stored.name, content: stored.content });
             }
+            else
+            {
+                missingUrlIds.push(urlId);
+            }
         }
     }
 
@@ -190,8 +195,9 @@ router.post("/analyze-with-paste", async (req, res) =>
     if (texts.length === 0)
     {
         return res.status(400).json({
-            error: "No content available. Upload files or paste text first.",
-            missingFileIds: missingFileIds.length > 0 ? missingFileIds : undefined
+            error: "No content available. Upload files, paste text, or add URLs first.",
+            missingFileIds: missingFileIds.length > 0 ? missingFileIds : undefined,
+            missingUrlIds: missingUrlIds.length > 0 ? missingUrlIds : undefined
         });
     }
 
@@ -229,6 +235,12 @@ router.post("/analyze-with-paste", async (req, res) =>
         {
             resp.warning = `${missingFileIds.length} uploaded file(s) could not be found. The server may have restarted. Please re-upload those files.`;
             resp.missingFileIds = missingFileIds;
+        }
+
+        if (missingUrlIds.length > 0)
+        {
+            resp.warning = (resp.warning ? resp.warning + " " : "") + `${missingUrlIds.length} URL(s) could not be found. Please re-fetch them.`;
+            resp.missingUrlIds = missingUrlIds;
         }
 
         log("info", `Analysis complete: ${skillMd.length} chars Skill.md generated (${strategy}, ${batches} batches)`);
